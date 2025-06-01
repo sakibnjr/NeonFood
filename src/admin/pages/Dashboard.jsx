@@ -485,7 +485,7 @@ const Dashboard = () => {
                     }`}>
                       {order.status}
                     </span>
-                    <p className="text-xs text-gray-500 mt-1">{formatDate(order.timestamp)}</p>
+                    <p className="text-xs text-gray-500 mt-1">{formatDate(order.orderTime)}</p>
                   </div>
                 </div>
               ))}
