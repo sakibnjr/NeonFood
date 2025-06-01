@@ -123,13 +123,25 @@ const MenuManagement = () => {
   const handleEditFoodSubmit = async (e) => {
     e.preventDefault()
     try {
+      const updateData = {
+        name: editFoodForm.name,
+        price: parseFloat(editFoodForm.price),
+        description: editFoodForm.description,
+        image: editFoodForm.image,
+        category: editFoodForm.category,
+        deliveryTime: editFoodForm.deliveryTime ? parseInt(editFoodForm.deliveryTime) : undefined,
+        rating: editFoodForm.rating ? parseFloat(editFoodForm.rating) : undefined,
+        popular: editFoodForm.popular
+      }
+      
       const res = await fetch(`http://localhost:5000/api/foods/${editFoodId}`, {
         method: 'PUT',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(editFoodForm)
+        body: JSON.stringify(updateData)
       })
       if (!res.ok) throw new Error('Update failed')
-      setFoods(foods.map(f => f._id === editFoodId ? { ...editFoodForm, _id: editFoodId } : f))
+      const updatedFood = await res.json()
+      setFoods(foods.map(f => f._id === editFoodId ? updatedFood : f))
       setEditFoodId(null)
       setEditFoodForm({})
     } catch (err) {
@@ -368,31 +380,118 @@ const MenuManagement = () => {
                   <p className="text-sm text-gray-600 mb-3">{food.description}</p>
                   
                   {editFoodId === food._id ? (
-                    <div className="space-y-2">
-                      <input 
-                        type="text" 
-                        name="name" 
-                        value={editFoodForm.name} 
-                        onChange={handleEditFoodChange} 
-                        className="w-full px-2 py-1 border rounded text-sm" 
-                      />
-                      <input 
-                        type="number" 
-                        name="price" 
-                        value={editFoodForm.price} 
-                        onChange={handleEditFoodChange} 
-                        className="w-full px-2 py-1 border rounded text-sm" 
-                      />
-                      <div className="flex space-x-2">
+                    <div className="space-y-3 border-t pt-3">
+                      <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                        <div>
+                          <label className="block text-xs font-medium text-gray-700 mb-1">Name</label>
+                          <input 
+                            type="text" 
+                            name="name" 
+                            value={editFoodForm.name || ''} 
+                            onChange={handleEditFoodChange} 
+                            className="w-full px-2 py-1 border border-gray-300 rounded text-sm focus:ring-1 focus:ring-blue-500 focus:border-blue-500" 
+                          />
+                        </div>
+                        <div>
+                          <label className="block text-xs font-medium text-gray-700 mb-1">Price ($)</label>
+                          <input 
+                            type="number" 
+                            name="price" 
+                            value={editFoodForm.price || ''} 
+                            onChange={handleEditFoodChange} 
+                            min="0" 
+                            step="0.01"
+                            className="w-full px-2 py-1 border border-gray-300 rounded text-sm focus:ring-1 focus:ring-blue-500 focus:border-blue-500" 
+                          />
+                        </div>
+                      </div>
+                      
+                      <div>
+                        <label className="block text-xs font-medium text-gray-700 mb-1">Description</label>
+                        <textarea 
+                          name="description" 
+                          value={editFoodForm.description || ''} 
+                          onChange={handleEditFoodChange} 
+                          rows={2}
+                          className="w-full px-2 py-1 border border-gray-300 rounded text-sm focus:ring-1 focus:ring-blue-500 focus:border-blue-500" 
+                        />
+                      </div>
+                      
+                      <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                        <div>
+                          <label className="block text-xs font-medium text-gray-700 mb-1">Image (emoji or URL)</label>
+                          <input 
+                            type="text" 
+                            name="image" 
+                            value={editFoodForm.image || ''} 
+                            onChange={handleEditFoodChange} 
+                            className="w-full px-2 py-1 border border-gray-300 rounded text-sm focus:ring-1 focus:ring-blue-500 focus:border-blue-500" 
+                          />
+                        </div>
+                        <div>
+                          <label className="block text-xs font-medium text-gray-700 mb-1">Category</label>
+                          <select 
+                            name="category" 
+                            value={editFoodForm.category || 'pizza'} 
+                            onChange={handleEditFoodChange} 
+                            className="w-full px-2 py-1 border border-gray-300 rounded text-sm focus:ring-1 focus:ring-blue-500 focus:border-blue-500"
+                          >
+                            <option value="pizza">Pizza</option>
+                            <option value="burgers">Burgers</option>
+                            <option value="sides">Sides</option>
+                            <option value="drinks">Drinks</option>
+                          </select>
+                        </div>
+                      </div>
+                      
+                      <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                        <div>
+                          <label className="block text-xs font-medium text-gray-700 mb-1">Delivery Time (min)</label>
+                          <input 
+                            type="number" 
+                            name="deliveryTime" 
+                            value={editFoodForm.deliveryTime || ''} 
+                            onChange={handleEditFoodChange} 
+                            min="1"
+                            className="w-full px-2 py-1 border border-gray-300 rounded text-sm focus:ring-1 focus:ring-blue-500 focus:border-blue-500" 
+                          />
+                        </div>
+                        <div>
+                          <label className="block text-xs font-medium text-gray-700 mb-1">Rating</label>
+                          <input 
+                            type="number" 
+                            name="rating" 
+                            value={editFoodForm.rating || ''} 
+                            onChange={handleEditFoodChange} 
+                            min="0" 
+                            max="5" 
+                            step="0.1"
+                            className="w-full px-2 py-1 border border-gray-300 rounded text-sm focus:ring-1 focus:ring-blue-500 focus:border-blue-500" 
+                          />
+                        </div>
+                      </div>
+                      
+                      <div className="flex items-center">
+                        <input 
+                          type="checkbox" 
+                          name="popular" 
+                          checked={editFoodForm.popular || false} 
+                          onChange={handleEditFoodChange} 
+                          className="mr-2" 
+                        />
+                        <label className="text-xs font-medium text-gray-700">Popular Item</label>
+                      </div>
+                      
+                      <div className="flex space-x-2 pt-2">
                         <button 
                           onClick={handleEditFoodSubmit} 
-                          className="bg-green-600 text-white px-3 py-1 rounded text-sm hover:bg-green-700"
+                          className="bg-green-600 text-white px-4 py-2 rounded text-sm hover:bg-green-700 transition-colors"
                         >
-                          Save
+                          Save Changes
                         </button>
                         <button 
                           onClick={handleCancelEdit} 
-                          className="bg-gray-500 text-white px-3 py-1 rounded text-sm hover:bg-gray-600"
+                          className="bg-gray-500 text-white px-4 py-2 rounded text-sm hover:bg-gray-600 transition-colors"
                         >
                           Cancel
                         </button>

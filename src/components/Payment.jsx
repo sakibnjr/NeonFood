@@ -3,6 +3,7 @@ import { useDispatch, useSelector } from 'react-redux'
 import { X, CreditCard, Wallet, ArrowLeft, CheckCircle } from 'lucide-react'
 import { selectOrderSummary } from '../store/slices/cartSlice'
 import { selectIsPaymentOpen } from '../store/slices/uiSlice'
+import { selectSettings } from '../store/slices/settingsSlice'
 import { addOrder } from '../store/slices/adminSlice'
 import { useAppActions } from '../store/hooks'
 
@@ -10,6 +11,7 @@ const Payment = () => {
   const dispatch = useDispatch()
   const orderSummary = useSelector(selectOrderSummary)
   const isOpen = useSelector(selectIsPaymentOpen)
+  const settings = useSelector(selectSettings)
   const { clearCart, closePayment, openReview } = useAppActions()
   
   const [selectedMethod, setSelectedMethod] = useState(null)
@@ -162,18 +164,46 @@ const Payment = () => {
                     <span>{formatCurrency(item.price * item.quantity)}</span>
                   </div>
                 ))}
-                {orderSummary.isPriority && (
-                  <div className="flex justify-between text-orange-600">
-                    <span>Priority Preparation</span>
-                    <span>{formatCurrency(4.99)}</span>
+                
+                <div className="border-t border-gray-200 pt-2 mt-2">
+                  <div className="flex justify-between">
+                    <span>Items Total</span>
+                    <span>{formatCurrency(orderSummary.itemsTotal)}</span>
                   </div>
-                )}
+                  
+                  {orderSummary.isPriority && (
+                    <div className="flex justify-between text-orange-600">
+                      <span>Priority Service</span>
+                      <span>+{formatCurrency(orderSummary.priorityFee)}</span>
+                    </div>
+                  )}
+                  
+                  <div className="flex justify-between">
+                    <span>Service Fee</span>
+                    <span>+{formatCurrency(orderSummary.serviceFee)}</span>
+                  </div>
+                  
+                  <div className="flex justify-between text-sm border-t border-gray-200 pt-1 mt-1">
+                    <span>Subtotal</span>
+                    <span>{formatCurrency(orderSummary.subtotal)}</span>
+                  </div>
+                  
+                  <div className="flex justify-between text-sm">
+                    <span>Tax</span>
+                    <span>+{formatCurrency(orderSummary.tax)}</span>
+                  </div>
+                </div>
               </div>
               <div className="border-t border-gray-300 mt-3 pt-3">
                 <div className="flex justify-between font-bold text-lg">
                   <span>Total</span>
                   <span>{formatCurrency(orderSummary.total)}</span>
                 </div>
+                {orderSummary.isPriority && (
+                  <p className="text-xs text-orange-600 mt-1">
+                    ⚡ Priority order - Estimated time: {orderSummary.deliveryTime} minutes
+                  </p>
+                )}
               </div>
             </div>
 
@@ -202,7 +232,7 @@ const Payment = () => {
                   value={formData.tableNumber}
                   onChange={handleInputChange}
                   min="1"
-                  max="50"
+                  max={settings.maxTables}
                   className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-primary-500"
                   required
                 />

@@ -60,21 +60,56 @@ export const selectItemsTotal = (state) => {
   return state.cart.items.reduce((total, item) => total + (item.price * item.quantity), 0)
 }
 
-export const selectTotalPrice = (state) => {
+export const selectPriorityFee = (state) => {
+  const priorityUpcharge = state.settings?.data?.priorityUpcharge || 4.99
+  return state.cart.isPriority ? priorityUpcharge : 0
+}
+
+export const selectServiceFee = (state) => {
+  const serviceFee = state.settings?.data?.serviceFee || 2.50
+  return state.cart.items.length > 0 ? serviceFee : 0
+}
+
+export const selectSubtotal = (state) => {
   const itemsTotal = selectItemsTotal(state)
-  const priorityFee = state.cart.isPriority ? 4.99 : 0
-  return itemsTotal + priorityFee
+  const priorityFee = selectPriorityFee(state)
+  const serviceFee = selectServiceFee(state)
+  return itemsTotal + priorityFee + serviceFee
+}
+
+export const selectTaxAmount = (state) => {
+  const taxRate = state.settings?.data?.taxRate || 8.5
+  const subtotal = selectSubtotal(state)
+  return subtotal * (taxRate / 100)
+}
+
+export const selectTotalPrice = (state) => {
+  const subtotal = selectSubtotal(state)
+  const tax = selectTaxAmount(state)
+  return subtotal + tax
 }
 
 export const selectDeliveryTime = (state) => {
   if (state.cart.items.length === 0) return 0
-  const standardTime = Math.max(...state.cart.items.map(item => item.deliveryTime))
-  return state.cart.isPriority ? Math.max(Math.ceil(standardTime * 0.5), 5) : standardTime
+  
+  // Use default prep time from settings if available
+  const defaultPrepTime = state.settings?.data?.defaultPrepTime || 15
+  
+  // Calculate based on items with fallback to default prep time
+  const maxItemTime = state.cart.items.length > 0 
+    ? Math.max(...state.cart.items.map(item => item.deliveryTime || defaultPrepTime))
+    : defaultPrepTime
+    
+  return state.cart.isPriority ? Math.max(Math.ceil(maxItemTime * 0.5), 5) : maxItemTime
 }
 
 export const selectOrderSummary = (state) => ({
   itemCount: selectTotalItems(state),
-  subtotal: selectItemsTotal(state),
+  itemsTotal: selectItemsTotal(state),
+  priorityFee: selectPriorityFee(state),
+  serviceFee: selectServiceFee(state),
+  subtotal: selectSubtotal(state),
+  tax: selectTaxAmount(state),
   total: selectTotalPrice(state),
   deliveryTime: selectDeliveryTime(state),
   isPriority: state.cart.isPriority,

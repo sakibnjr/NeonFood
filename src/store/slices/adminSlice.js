@@ -70,19 +70,30 @@ const adminSlice = createSlice({
     logout: (state) => {
       state.isAuthenticated = false
       state.user = null
+      // Clear auth token from localStorage
+      localStorage.removeItem('adminToken')
     },
     setAuthenticated: (state, action) => {
       state.isAuthenticated = action.payload
       if (action.payload) {
         state.user = {
           id: 1,
-          username: 'admin',
+          username: 'user',
           name: 'Restaurant Manager',
           role: 'admin'
         }
       } else {
         state.user = null
       }
+    },
+    setLoading: (state, action) => {
+      state.loading = action.payload
+    },
+    setError: (state, action) => {
+      state.error = action.payload
+    },
+    clearError: (state) => {
+      state.error = null
     }
   },
   extraReducers: (builder) => {
@@ -160,6 +171,6 @@ export const selectOrdersByStatus = (status) => (state) =>
 export const selectPendingOrders = (state) => 
   state.admin.orders.filter(order => order.status === 'pending')
 
-export const { logout, setAuthenticated } = adminSlice.actions
+export const { logout, setAuthenticated, setLoading, setError, clearError } = adminSlice.actions
 
 export default adminSlice.reducer 

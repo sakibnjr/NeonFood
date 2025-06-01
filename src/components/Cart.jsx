@@ -4,10 +4,14 @@ import {
   selectCartItems, 
   selectIsPriority, 
   selectItemsTotal, 
+  selectPriorityFee,
+  selectServiceFee,
+  selectTaxAmount,
   selectTotalPrice, 
   selectDeliveryTime 
 } from '../store/slices/cartSlice'
 import { selectIsCartOpen } from '../store/slices/uiSlice'
+import { selectSettings } from '../store/slices/settingsSlice'
 import { useAppActions } from '../store/hooks'
 
 const Cart = () => {
@@ -16,8 +20,12 @@ const Cart = () => {
   const items = useSelector(selectCartItems)
   const isPriority = useSelector(selectIsPriority)
   const itemsTotal = useSelector(selectItemsTotal)
+  const priorityFee = useSelector(selectPriorityFee)
+  const serviceFee = useSelector(selectServiceFee)
+  const taxAmount = useSelector(selectTaxAmount)
   const totalPrice = useSelector(selectTotalPrice)
   const deliveryTime = useSelector(selectDeliveryTime)
+  const settings = useSelector(selectSettings)
   
   // Redux actions
   const { 
@@ -33,10 +41,6 @@ const Cart = () => {
 
   // Helper function to detect if image is a URL
   const isImageUrl = (str) => typeof str === 'string' && (str.startsWith('http') || str.startsWith('/'))
-
-  const getPriorityFee = () => {
-    return isPriority ? 4.99 : 0
-  }
 
   const handleCheckout = () => {
     if (items.length === 0) return
@@ -63,7 +67,7 @@ const Cart = () => {
     togglePriority(checked)
   }
 
-  const standardTime = items.length > 0 ? Math.max(...items.map(item => item.deliveryTime)) : 0
+  const standardTime = items.length > 0 ? Math.max(...items.map(item => item.deliveryTime || settings.defaultPrepTime)) : settings.defaultPrepTime
 
   return (
     <div className="fixed inset-0 z-50 overflow-hidden">
@@ -125,7 +129,7 @@ const Cart = () => {
                       <p className="text-sm text-gray-500">${item.price.toFixed(2)} each</p>
                       <div className="flex items-center space-x-1 mt-1">
                         <Clock size={12} className="text-green-500" />
-                        <span className="text-xs text-gray-500">{item.deliveryTime} min</span>
+                        <span className="text-xs text-gray-500">{item.deliveryTime || settings.defaultPrepTime} min</span>
                       </div>
                     </div>
                     
@@ -192,7 +196,7 @@ const Cart = () => {
                       </div>
                       <div className="flex items-center justify-between text-sm mt-1">
                         <span className="text-yellow-800">Priority fee:</span>
-                        <span className="font-semibold text-yellow-900">+$4.99</span>
+                        <span className="font-semibold text-yellow-900">+${priorityFee.toFixed(2)}</span>
                       </div>
                     </div>
                   )}
@@ -230,15 +234,32 @@ const Cart = () => {
               {/* Order Summary */}
               <div className="space-y-2">
                 <div className="flex justify-between items-center text-sm">
-                  <span>Subtotal:</span>
+                  <span>Items total:</span>
                   <span>${itemsTotal.toFixed(2)}</span>
                 </div>
+                
                 {isPriority && (
                   <div className="flex justify-between items-center text-sm">
                     <span>Priority fee:</span>
-                    <span>+${getPriorityFee().toFixed(2)}</span>
+                    <span>+${priorityFee.toFixed(2)}</span>
                   </div>
                 )}
+                
+                <div className="flex justify-between items-center text-sm">
+                  <span>Service fee:</span>
+                  <span>+${serviceFee.toFixed(2)}</span>
+                </div>
+                
+                <div className="flex justify-between items-center text-sm border-t pt-2">
+                  <span>Subtotal:</span>
+                  <span>${(itemsTotal + priorityFee + serviceFee).toFixed(2)}</span>
+                </div>
+                
+                <div className="flex justify-between items-center text-sm">
+                  <span>Tax ({settings.taxRate}%):</span>
+                  <span>+${taxAmount.toFixed(2)}</span>
+                </div>
+                
                 <div className="flex justify-between items-center text-lg font-semibold border-t pt-2">
                   <span>Total:</span>
                   <span className="text-primary-600">${totalPrice.toFixed(2)}</span>

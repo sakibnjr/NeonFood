@@ -1,8 +1,9 @@
 import { useState, useEffect } from 'react'
 import { useDispatch, useSelector } from 'react-redux'
 import { useNavigate } from 'react-router-dom'
-import { User, Lock, AlertCircle } from 'lucide-react'
-import { setAuthenticated, selectLoading, selectError, selectIsAuthenticated } from '../../store/slices/adminSlice'
+import { User, Lock } from 'lucide-react'
+import toast, { Toaster } from 'react-hot-toast'
+import { setAuthenticated, selectLoading, selectError, selectIsAuthenticated, setLoading, setError } from '../../store/slices/adminSlice'
 
 const AdminLogin = () => {
   const dispatch = useDispatch()
@@ -23,11 +24,76 @@ const AdminLogin = () => {
     }
   }, [isAuthenticated, navigate])
 
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault()
-    // Set isAuthenticated to true in Redux (simulate login)
-    dispatch(setAuthenticated(true))
-    navigate('/admin')
+    
+    // Clear any previous errors
+    dispatch(setError(null))
+    dispatch(setLoading(true))
+
+    // Show loading toast
+    const loadingToast = toast.loading('Signing in...')
+
+    try {
+      const response = await fetch('http://localhost:5000/api/admin/login', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          username: formData.username,
+          password: formData.password
+        })
+      })
+
+      let data
+      const contentType = response.headers.get('content-type')
+      
+      if (contentType && contentType.includes('application/json')) {
+        data = await response.json()
+      } else {
+        // Handle non-JSON responses
+        const text = await response.text()
+        throw new Error(text || 'Server error: Invalid response format')
+      }
+
+      if (response.ok) {
+        // Store auth token if provided
+        if (data.token) {
+          localStorage.setItem('adminToken', data.token)
+        }
+        
+        // Dismiss loading toast and show success
+        toast.dismiss(loadingToast)
+        toast.success('Welcome back! Redirecting to dashboard...')
+        
+        dispatch(setAuthenticated(true))
+        setTimeout(() => navigate('/admin'), 1000) // Small delay to show success message
+      } else {
+        // Handle authentication errors
+        toast.dismiss(loadingToast)
+        toast.error(data.message || 'Invalid username or password')
+        dispatch(setError(data.message || 'Invalid username or password'))
+      }
+    } catch (error) {
+      console.error('Login error:', error)
+      
+      toast.dismiss(loadingToast)
+      
+      let errorMessage
+      if (error.name === 'TypeError' && error.message.includes('fetch')) {
+        errorMessage = 'Unable to connect to server. Please ensure the server is running.'
+      } else if (error.message.includes('JSON')) {
+        errorMessage = 'Server error: Invalid response. Please try again.'
+      } else {
+        errorMessage = error.message || 'An unexpected error occurred. Please try again.'
+      }
+      
+      toast.error(errorMessage)
+      dispatch(setError(errorMessage))
+    } finally {
+      dispatch(setLoading(false))
+    }
   }
 
   const handleChange = (e) => {
@@ -37,30 +103,18 @@ const AdminLogin = () => {
     })
   }
 
-  const fillDemoCredentials = () => {
-    setFormData({
-      username: 'admin',
-      password: 'admin123'
-    })
-  }
-
   return (
-    <div className="min-h-screen bg-gradient-to-br from-primary-500 to-primary-700 flex items-center justify-center p-4">
+    <div className="min-h-screen bg-gradient-to-br from-gray-900 via-gray-800 to-amber-900 flex items-center justify-center p-4">
       <div className="bg-white rounded-xl shadow-2xl p-8 w-full max-w-md">
         <div className="text-center mb-8">
-          <div className="text-4xl mb-4">🍜</div>
+          <div className="w-16 h-16 mx-auto mb-4 bg-gradient-to-br from-amber-500 to-orange-600 rounded-xl flex items-center justify-center text-3xl shadow-lg">
+            🍽️
+          </div>
           <h1 className="text-2xl font-bold text-gray-900 mb-2">NeonFood Admin</h1>
           <p className="text-gray-600">Sign in to manage your restaurant</p>
         </div>
 
         <form onSubmit={handleSubmit} className="space-y-6">
-          {error && (
-            <div className="bg-red-50 border border-red-200 rounded-lg p-4 flex items-center space-x-2">
-              <AlertCircle size={20} className="text-red-500" />
-              <span className="text-red-700">{error}</span>
-            </div>
-          )}
-
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-2">
               Username
@@ -72,9 +126,10 @@ const AdminLogin = () => {
                 name="username"
                 value={formData.username}
                 onChange={handleChange}
-                className="w-full pl-10 pr-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-primary-500"
+                className="w-full pl-10 pr-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-amber-500 focus:border-amber-500 transition-colors"
                 placeholder="Enter username"
                 required
+                disabled={loading}
               />
             </div>
           </div>
@@ -90,20 +145,21 @@ const AdminLogin = () => {
                 name="password"
                 value={formData.password}
                 onChange={handleChange}
-                className="w-full pl-10 pr-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-primary-500"
+                className="w-full pl-10 pr-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-amber-500 focus:border-amber-500 transition-colors"
                 placeholder="Enter password"
                 required
+                disabled={loading}
               />
             </div>
           </div>
 
           <button
             type="submit"
-            disabled={loading}
-            className={`w-full py-3 px-4 rounded-lg font-semibold text-white transition-colors ${
-              loading
+            disabled={loading || !formData.username || !formData.password}
+            className={`w-full py-3 px-4 rounded-lg font-semibold text-white transition-all duration-200 ${
+              loading || !formData.username || !formData.password
                 ? 'bg-gray-400 cursor-not-allowed'
-                : 'bg-primary-500 hover:bg-primary-600'
+                : 'bg-gradient-to-r from-amber-500 to-orange-600 hover:from-amber-600 hover:to-orange-700 transform hover:scale-105 shadow-lg hover:shadow-xl'
             }`}
           >
             {loading ? (
@@ -117,24 +173,49 @@ const AdminLogin = () => {
           </button>
         </form>
 
-        <div className="mt-6 p-4 bg-gray-50 rounded-lg">
-          <p className="text-sm text-gray-600 mb-2">Demo Credentials:</p>
-          <p className="text-xs text-gray-500">Username: <strong>admin</strong></p>
-          <p className="text-xs text-gray-500">Password: <strong>admin123</strong></p>
-          <button
-            onClick={fillDemoCredentials}
-            className="mt-2 text-xs bg-primary-100 text-primary-700 px-3 py-1 rounded-md hover:bg-primary-200 transition-colors"
-          >
-            Fill Demo Credentials
-          </button>
-        </div>
-
-        <div className="mt-4 text-center">
-          <p className="text-xs text-gray-500">
-            Debug: Auth Status = {isAuthenticated ? 'Authenticated' : 'Not Authenticated'}
+        <div className="mt-6 p-4 bg-blue-50 border border-blue-200 rounded-lg">
+          <p className="text-sm text-blue-800 text-center">
+            <strong>Admin Access Required</strong>
+          </p>
+          <p className="text-xs text-blue-700 mt-2 text-center">
+            Contact the developer for login credentials
           </p>
         </div>
       </div>
+      
+      {/* Toast Container */}
+      <Toaster
+        position="top-center"
+        toastOptions={{
+          duration: 4000,
+          style: {
+            background: '#fff',
+            color: '#374151',
+            fontWeight: '500',
+            borderRadius: '0.75rem',
+            border: '1px solid #e5e7eb',
+            boxShadow: '0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05)',
+          },
+          success: {
+            iconTheme: {
+              primary: '#10b981',
+              secondary: '#fff',
+            },
+          },
+          error: {
+            iconTheme: {
+              primary: '#ef4444',
+              secondary: '#fff',
+            },
+          },
+          loading: {
+            iconTheme: {
+              primary: '#f59e0b',
+              secondary: '#fff',
+            },
+          },
+        }}
+      />
     </div>
   )
 }

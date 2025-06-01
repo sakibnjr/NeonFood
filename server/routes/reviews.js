@@ -1,6 +1,7 @@
 const express = require('express');
 const router = express.Router();
 const Review = require('../models/Review');
+const notificationService = require('../utils/notifications');
 
 // GET all reviews
 router.get('/', async (req, res) => {
@@ -17,6 +18,10 @@ router.post('/', async (req, res) => {
   try {
     const newReview = new Review(req.body);
     const savedReview = await newReview.save();
+    
+    // Send new review notification
+    await notificationService.notifyNewReview(savedReview);
+    
     res.status(201).json(savedReview);
   } catch (error) {
     res.status(400).json({ message: error.message });

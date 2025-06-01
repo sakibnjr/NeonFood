@@ -102,7 +102,7 @@ const Reviews = () => {
           <div className="flex items-center justify-between">
             <div>
               <p className="text-sm font-medium text-gray-600">Total Reviews</p>
-              <p className="text-2xl font-bold text-gray-900">{stats.totalReviews}</p>
+              <p className="text-2xl font-bold text-gray-900">{stats?.totalReviews || 0}</p>
             </div>
             <MessageCircle className="h-8 w-8 text-blue-600" />
           </div>
@@ -113,8 +113,8 @@ const Reviews = () => {
             <div>
               <p className="text-sm font-medium text-gray-600">Average Rating</p>
               <div className="flex items-center space-x-2">
-                <p className="text-2xl font-bold text-gray-900">{stats.averageRating.toFixed(1)}</p>
-                <StarRating rating={Math.round(stats.averageRating)} />
+                <p className="text-2xl font-bold text-gray-900">{stats?.averageRating?.toFixed(1) || '0.0'}</p>
+                <StarRating rating={Math.round(stats?.averageRating || 0)} />
               </div>
             </div>
             <Star className="h-8 w-8 text-yellow-500" />
@@ -125,7 +125,7 @@ const Reviews = () => {
           <div className="flex items-center justify-between">
             <div>
               <p className="text-sm font-medium text-gray-600">Food Rating</p>
-              <p className="text-2xl font-bold text-gray-900">{stats.aspectRatings.food.toFixed(1)}</p>
+              <p className="text-2xl font-bold text-gray-900">{stats?.aspectRatings?.food?.toFixed(1) || '0.0'}</p>
             </div>
             <div className="h-8 w-8 text-orange-600 text-2xl">🍔</div>
           </div>
@@ -135,7 +135,7 @@ const Reviews = () => {
           <div className="flex items-center justify-between">
             <div>
               <p className="text-sm font-medium text-gray-600">Service Rating</p>
-              <p className="text-2xl font-bold text-gray-900">{stats.aspectRatings.service.toFixed(1)}</p>
+              <p className="text-2xl font-bold text-gray-900">{stats?.aspectRatings?.service?.toFixed(1) || '0.0'}</p>
             </div>
             <div className="h-8 w-8 text-green-600 text-2xl">👨‍💼</div>
           </div>
