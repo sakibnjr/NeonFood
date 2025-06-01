@@ -211,32 +211,37 @@ const Payment = () => {
 
             {/* Payment Methods */}
             <div className="space-y-4">
+              <h3 className="text-lg font-semibold text-gray-900 mb-4">Choose Payment Method</h3>
+              
               <button
                 onClick={() => setSelectedMethod('online')}
-                className="w-full p-4 border-2 border-gray-200 rounded-lg hover:border-primary-500 transition-colors text-left"
+                className="w-full p-4 border-2 border-gray-200 rounded-lg hover:border-primary-500 transition-colors text-left group"
               >
                 <div className="flex items-center space-x-3">
-                  <div className="p-3 bg-blue-100 rounded-lg">
+                  <div className="p-3 bg-blue-100 rounded-lg group-hover:bg-blue-200 transition-colors">
                     <CreditCard className="text-blue-600" size={24} />
                   </div>
-                  <div>
-                    <h3 className="font-semibold text-gray-900">Pay Online Now</h3>
-                    <p className="text-sm text-gray-600">Credit/Debit Card or Digital Wallet</p>
+                  <div className="flex-1">
+                    <h3 className="font-semibold text-gray-900">Pay Now (Online)</h3>
+                    <p className="text-sm text-gray-600">Credit/Debit Card - Secure payment processed immediately</p>
+                    <p className="text-xs text-green-600 mt-1">✓ Order confirmed instantly</p>
                   </div>
                 </div>
               </button>
 
               <button
                 onClick={() => handlePaymentComplete('counter')}
-                className="w-full p-4 border-2 border-gray-200 rounded-lg hover:border-primary-500 transition-colors text-left"
+                disabled={processing}
+                className="w-full p-4 border-2 border-gray-200 rounded-lg hover:border-primary-500 transition-colors text-left group disabled:opacity-50 disabled:cursor-not-allowed"
               >
                 <div className="flex items-center space-x-3">
-                  <div className="p-3 bg-green-100 rounded-lg">
+                  <div className="p-3 bg-green-100 rounded-lg group-hover:bg-green-200 transition-colors">
                     <Wallet className="text-green-600" size={24} />
                   </div>
-                  <div>
-                    <h3 className="font-semibold text-gray-900">Pay Before Leave</h3>
-                    <p className="text-sm text-gray-600">Pay at the counter when your order is ready</p>
+                  <div className="flex-1">
+                    <h3 className="font-semibold text-gray-900">Pay at Counter</h3>
+                    <p className="text-sm text-gray-600">Pay cash or card when picking up your order</p>
+                    <p className="text-xs text-orange-600 mt-1">⚠ Remember to pay before leaving</p>
                   </div>
                 </div>
               </button>

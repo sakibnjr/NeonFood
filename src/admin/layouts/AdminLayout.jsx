@@ -10,7 +10,8 @@ import {
   Bell,
   User,
   Star,
-  Package
+  Package,
+  ChefHat
 } from 'lucide-react'
 import { useState } from 'react'
 import { logout, selectAdminUser, selectActiveOrders } from '../../store/slices/adminSlice'
@@ -43,6 +44,12 @@ const AdminLayout = () => {
       icon: Package,
       current: location.pathname === '/admin/orders',
       badge: activeOrders.length
+    },
+    {
+      name: 'Menu Management',
+      href: '/admin/menu',
+      icon: ChefHat,
+      current: location.pathname === '/admin/menu'
     },
     {
       name: 'Reviews',
@@ -93,7 +100,7 @@ const AdminLayout = () => {
               to={item.href}
               className={`group flex items-center justify-between px-3 py-2 text-sm font-medium rounded-lg ${
                 item.current
-                  ? 'bg-primary-100 text-primary-700'
+                  ? 'bg-blue-100 text-blue-700'
                   : 'text-gray-600 hover:bg-gray-50 hover:text-gray-900'
               }`}
             >
@@ -134,8 +141,8 @@ const AdminLayout = () => {
               </button>
 
               <div className="flex items-center space-x-3">
-                <div className="flex items-center justify-center w-8 h-8 bg-primary-100 rounded-full">
-                  <User size={16} className="text-primary-600" />
+                <div className="flex items-center justify-center w-8 h-8 bg-blue-100 rounded-full">
+                  <User size={16} className="text-blue-600" />
                 </div>
                 <div className="hidden sm:block">
                   <p className="text-sm font-medium text-gray-900">{user?.name}</p>

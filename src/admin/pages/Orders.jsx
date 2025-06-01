@@ -8,7 +8,9 @@ import {
   AlertTriangle,
   CheckCircle,
   ChefHat,
-  Filter
+  Filter,
+  CreditCard,
+  Wallet
 } from 'lucide-react'
 import { 
   selectOrders, 
@@ -224,8 +226,21 @@ const Orders = () => {
                   <span>Ordered: {formatTime(order.orderTime)}</span>
                   <span>{getTimeSinceOrder(order.orderTime)}</span>
                 </div>
-                <div className="mt-1">
-                  Estimated: {order.estimatedTime} minutes
+                <div className="flex items-center justify-between mt-1">
+                  <span>Estimated: {order.estimatedTime} minutes</span>
+                  <div className="flex items-center space-x-1">
+                    {order.paymentMethod === 'online' ? (
+                      <>
+                        <CreditCard size={12} className="text-green-600" />
+                        <span className="text-green-600">Paid</span>
+                      </>
+                    ) : (
+                      <>
+                        <Wallet size={12} className="text-orange-600" />
+                        <span className="text-orange-600">Pay at Counter</span>
+                      </>
+                    )}
+                  </div>
                 </div>
               </div>
 

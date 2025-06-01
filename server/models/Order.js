@@ -16,7 +16,8 @@ const OrderSchema = new mongoose.Schema({
   isPriority: { type: Boolean, default: false },
   orderTime: { type: Date, default: Date.now },
   estimatedTime: { type: Number },
-  completedTime: { type: Date }
+  completedTime: { type: Date },
+  paymentMethod: { type: String, enum: ['online', 'counter'], default: 'counter' }
 })
 
 module.exports = mongoose.model('Order', OrderSchema); 

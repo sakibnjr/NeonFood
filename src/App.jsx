@@ -13,6 +13,7 @@ import AdminLogin from './admin/components/AdminLogin'
 import AdminLayout from './admin/layouts/AdminLayout'
 import Dashboard from './admin/pages/Dashboard'
 import Orders from './admin/pages/Orders'
+import MenuManagement from './admin/pages/MenuManagement'
 import Reviews from './admin/pages/Reviews'
 import Settings from './admin/pages/Settings'
 import ProtectedRoute from './admin/components/ProtectedRoute'
@@ -130,6 +131,7 @@ const AdminRouteGuard = () => {
       <Route path="/" element={<AdminLayout />}>
         <Route index element={<Dashboard />} />
         <Route path="orders" element={<Orders />} />
+        <Route path="menu" element={<MenuManagement />} />
         <Route path="reviews" element={<Reviews />} />
         <Route path="settings" element={<Settings />} />
       </Route>
