@@ -1,61 +1,111 @@
-import { createSlice } from '@reduxjs/toolkit'
+import { createSlice, createAsyncThunk } from '@reduxjs/toolkit'
 
-// Mock initial reviews data
-const mockReviews = [
-  {
-    id: 'REV-001',
-    customerName: 'Sarah Johnson',
-    orderId: 'ORD-001',
-    rating: 5,
-    comment: 'Amazing food! The pizza was perfectly cooked and arrived quickly. Great service!',
-    date: new Date(Date.now() - 86400000).toISOString(), // 1 day ago
-    aspects: {
-      food: 5,
-      service: 5,
-      speed: 4,
-      value: 5
-    }
-  },
-  {
-    id: 'REV-002',
-    customerName: 'Mike Chen',
-    orderId: 'ORD-002',
-    rating: 4,
-    comment: 'Really enjoyed the burger and fries. The priority order option is worth it!',
-    date: new Date(Date.now() - 172800000).toISOString(), // 2 days ago
-    aspects: {
-      food: 4,
-      service: 4,
-      speed: 5,
-      value: 4
-    }
-  },
-  {
-    id: 'REV-003',
-    customerName: 'Emily Davis',
-    orderId: null,
-    rating: 5,
-    comment: 'Love the new admin system! As a restaurant owner, this makes managing orders so much easier.',
-    date: new Date(Date.now() - 259200000).toISOString(), // 3 days ago
-    aspects: {
-      food: 5,
-      service: 5,
-      speed: 5,
-      value: 5
+const API_URL = 'http://localhost:5000/api/reviews'
+
+// Async thunks for review operations
+export const fetchReviews = createAsyncThunk(
+  'reviews/fetchReviews',
+  async (_, { rejectWithValue }) => {
+    try {
+      const response = await fetch(API_URL)
+      if (!response.ok) {
+        throw new Error('Failed to fetch reviews')
+      }
+      const data = await response.json()
+      return data
+    } catch (error) {
+      return rejectWithValue(error.message)
     }
   }
-]
+)
+
+export const fetchReviewStats = createAsyncThunk(
+  'reviews/fetchReviewStats',
+  async (_, { rejectWithValue }) => {
+    try {
+      const response = await fetch(`${API_URL}/stats`)
+      if (!response.ok) {
+        throw new Error('Failed to fetch review stats')
+      }
+      const data = await response.json()
+      return data
+    } catch (error) {
+      return rejectWithValue(error.message)
+    }
+  }
+)
+
+export const addReview = createAsyncThunk(
+  'reviews/addReview',
+  async (reviewData, { rejectWithValue }) => {
+    try {
+      const response = await fetch(API_URL, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(reviewData),
+      })
+      if (!response.ok) {
+        throw new Error('Failed to add review')
+      }
+      const data = await response.json()
+      return data
+    } catch (error) {
+      return rejectWithValue(error.message)
+    }
+  }
+)
+
+export const updateReview = createAsyncThunk(
+  'reviews/updateReview',
+  async ({ id, ...reviewData }, { rejectWithValue }) => {
+    try {
+      const response = await fetch(`${API_URL}/${id}`, {
+        method: 'PUT',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(reviewData),
+      })
+      if (!response.ok) {
+        throw new Error('Failed to update review')
+      }
+      const data = await response.json()
+      return data
+    } catch (error) {
+      return rejectWithValue(error.message)
+    }
+  }
+)
+
+export const deleteReview = createAsyncThunk(
+  'reviews/deleteReview',
+  async (reviewId, { rejectWithValue }) => {
+    try {
+      const response = await fetch(`${API_URL}/${reviewId}`, {
+        method: 'DELETE',
+      })
+      if (!response.ok) {
+        throw new Error('Failed to delete review')
+      }
+      return reviewId
+    } catch (error) {
+      return rejectWithValue(error.message)
+    }
+  }
+)
 
 const initialState = {
-  reviews: mockReviews,
+  reviews: [],
   stats: {
-    totalReviews: mockReviews.length,
-    averageRating: 4.7,
+    totalReviews: 0,
+    averageRating: 0,
     aspectRatings: {
-      food: 4.7,
-      service: 4.7,
-      speed: 4.7,
-      value: 4.7
+      food: 0,
+      service: 0,
+      speed: 0,
+      value: 0
     }
   },
   loading: false,
@@ -65,71 +115,81 @@ const initialState = {
 const reviewsSlice = createSlice({
   name: 'reviews',
   initialState,
-  reducers: {
-    addReview: (state, action) => {
-      const newReview = {
-        ...action.payload,
-        id: `REV-${String(state.reviews.length + 1).padStart(3, '0')}`,
-        date: new Date().toISOString()
-      }
+  reducers: {},
+  extraReducers: (builder) => {
+    builder
+      // Fetch reviews
+      .addCase(fetchReviews.pending, (state) => {
+        state.loading = true
+        state.error = null
+      })
+      .addCase(fetchReviews.fulfilled, (state, action) => {
+        state.loading = false
+        state.reviews = action.payload
+      })
+      .addCase(fetchReviews.rejected, (state, action) => {
+        state.loading = false
+        state.error = action.payload
+      })
       
-      state.reviews.unshift(newReview)
+      // Fetch review stats
+      .addCase(fetchReviewStats.pending, (state) => {
+        state.loading = true
+        state.error = null
+      })
+      .addCase(fetchReviewStats.fulfilled, (state, action) => {
+        state.loading = false
+        state.stats = action.payload
+      })
+      .addCase(fetchReviewStats.rejected, (state, action) => {
+        state.loading = false
+        state.error = action.payload
+      })
       
-      // Update stats
-      const totalReviews = state.reviews.length
-      const totalRating = state.reviews.reduce((sum, review) => sum + review.rating, 0)
-      state.stats.totalReviews = totalReviews
-      state.stats.averageRating = (totalRating / totalReviews)
+      // Add review
+      .addCase(addReview.pending, (state) => {
+        state.loading = true
+        state.error = null
+      })
+      .addCase(addReview.fulfilled, (state, action) => {
+        state.loading = false
+        state.reviews.unshift(action.payload)
+      })
+      .addCase(addReview.rejected, (state, action) => {
+        state.loading = false
+        state.error = action.payload
+      })
       
-      // Update aspect ratings if provided
-      if (newReview.aspects) {
-        const aspectTotals = state.reviews.reduce((totals, review) => {
-          if (review.aspects) {
-            Object.keys(review.aspects).forEach(aspect => {
-              totals[aspect] = (totals[aspect] || 0) + review.aspects[aspect]
-            })
-          }
-          return totals
-        }, {})
-        
-        Object.keys(aspectTotals).forEach(aspect => {
-          state.stats.aspectRatings[aspect] = aspectTotals[aspect] / totalReviews
-        })
-      }
-    },
-    
-    deleteReview: (state, action) => {
-      const reviewId = action.payload
-      state.reviews = state.reviews.filter(review => review.id !== reviewId)
-      
-      // Recalculate stats
-      const totalReviews = state.reviews.length
-      if (totalReviews > 0) {
-        const totalRating = state.reviews.reduce((sum, review) => sum + review.rating, 0)
-        state.stats.averageRating = totalRating / totalReviews
-        state.stats.totalReviews = totalReviews
-      } else {
-        state.stats = {
-          totalReviews: 0,
-          averageRating: 0,
-          aspectRatings: {
-            food: 0,
-            service: 0,
-            speed: 0,
-            value: 0
-          }
+      // Update review
+      .addCase(updateReview.pending, (state) => {
+        state.loading = true
+        state.error = null
+      })
+      .addCase(updateReview.fulfilled, (state, action) => {
+        state.loading = false
+        const index = state.reviews.findIndex(review => review._id === action.payload._id)
+        if (index !== -1) {
+          state.reviews[index] = action.payload
         }
-      }
-    },
-    
-    updateReviewStats: (state) => {
-      const totalReviews = state.reviews.length
-      if (totalReviews > 0) {
-        const totalRating = state.reviews.reduce((sum, review) => sum + review.rating, 0)
-        state.stats.averageRating = totalRating / totalReviews
-        state.stats.totalReviews = totalReviews
-      }
-    }
+      })
+      .addCase(updateReview.rejected, (state, action) => {
+        state.loading = false
+        state.error = action.payload
+      })
+      
+      // Delete review
+      .addCase(deleteReview.pending, (state) => {
+        state.loading = true
+        state.error = null
+      })
+      .addCase(deleteReview.fulfilled, (state, action) => {
+        state.loading = false
+        state.reviews = state.reviews.filter(review => review._id !== action.payload)
+      })
+      .addCase(deleteReview.rejected, (state, action) => {
+        state.loading = false
+        state.error = action.payload
+      })
   }
 })
 
@@ -146,7 +206,5 @@ export const selectReviewsByRating = (rating) => (state) =>
   state.reviews.reviews.filter(review => review.rating === rating)
 
 export const selectAverageRating = (state) => state.reviews.stats.averageRating
-
-export const { addReview, deleteReview, updateReviewStats } = reviewsSlice.actions
 
 export default reviewsSlice.reducer 

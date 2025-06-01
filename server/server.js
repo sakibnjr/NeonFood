@@ -4,6 +4,7 @@ const mongoose = require('mongoose');
 const cors = require('cors');
 const foodRoutes = require('./routes/food');
 const orderRoutes = require('./routes/order');
+const reviewRoutes = require('./routes/reviews');
 
 const app = express();
 app.use(cors());
@@ -15,6 +16,7 @@ app.get('/', (req, res) => res.send('NeonFood API running!'));
 // TODO: Add your routes here
 app.use('/api/foods', foodRoutes);
 app.use('/api/orders', orderRoutes);
+app.use('/api/reviews', reviewRoutes);
 
 const PORT = process.env.PORT || 5000;
 mongoose.connect(process.env.MONGO_URI, { useNewUrlParser: true, useUnifiedTopology: true })

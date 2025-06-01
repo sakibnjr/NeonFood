@@ -12,7 +12,7 @@ import {
   Eye
 } from 'lucide-react'
 import { selectStats, selectOrders, selectActiveOrders, selectRecentOrders, fetchOrders } from '../../store/slices/adminSlice'
-import { selectReviewStats, selectRecentReviews } from '../../store/slices/reviewsSlice'
+import { selectReviewStats, selectRecentReviews, fetchReviews, fetchReviewStats } from '../../store/slices/reviewsSlice'
 import { useState, useEffect, useMemo } from 'react'
 
 const Dashboard = () => {
@@ -197,6 +197,8 @@ const Dashboard = () => {
   useEffect(() => {
     fetchFoods()
     dispatch(fetchOrders())
+    dispatch(fetchReviews())
+    dispatch(fetchReviewStats())
   }, [dispatch])
 
   // Delete food
@@ -509,7 +511,7 @@ const Dashboard = () => {
                 </div>
               ) : (
                 recentReviews.map((review) => (
-                  <div key={review.id} className="p-3 bg-gray-50 rounded-lg">
+                  <div key={review._id} className="p-3 bg-gray-50 rounded-lg">
                     <div className="flex items-start justify-between mb-2">
                       <div>
                         <p className="font-medium text-gray-900">

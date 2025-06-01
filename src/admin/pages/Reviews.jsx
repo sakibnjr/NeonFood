@@ -1,10 +1,14 @@
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { useSelector, useDispatch } from 'react-redux'
 import { Star, MessageCircle, Calendar, User, Trash2, Filter } from 'lucide-react'
 import { 
   selectReviews, 
   selectReviewStats, 
   selectReviewsByRating,
+  selectReviewsLoading,
+  selectReviewsError,
+  fetchReviews,
+  fetchReviewStats,
   deleteReview 
 } from '../../store/slices/reviewsSlice'
 
@@ -12,8 +16,15 @@ const Reviews = () => {
   const dispatch = useDispatch()
   const reviews = useSelector(selectReviews)
   const stats = useSelector(selectReviewStats)
+  const loading = useSelector(selectReviewsLoading)
+  const error = useSelector(selectReviewsError)
   const [filterRating, setFilterRating] = useState('all')
   const [sortBy, setSortBy] = useState('newest')
+
+  useEffect(() => {
+    dispatch(fetchReviews())
+    dispatch(fetchReviewStats())
+  }, [dispatch])
 
   const filteredReviews = reviews
     .filter(review => filterRating === 'all' || review.rating === parseInt(filterRating))
@@ -191,14 +202,22 @@ const Reviews = () => {
 
       {/* Reviews List */}
       <div className="space-y-4">
-        {filteredReviews.length === 0 ? (
+        {loading ? (
+          <div className="bg-white rounded-lg p-8 text-center">
+            <p className="text-gray-500">Loading reviews...</p>
+          </div>
+        ) : error ? (
+          <div className="bg-white rounded-lg p-8 text-center">
+            <p className="text-red-500">Error: {error}</p>
+          </div>
+        ) : filteredReviews.length === 0 ? (
           <div className="bg-white rounded-lg p-8 text-center">
             <MessageCircle size={48} className="text-gray-300 mx-auto mb-4" />
             <p className="text-gray-500">No reviews found for the selected filter.</p>
           </div>
         ) : (
           filteredReviews.map((review) => (
-            <div key={review.id} className="bg-white rounded-lg p-6 shadow-sm border border-gray-200">
+            <div key={review._id} className="bg-white rounded-lg p-6 shadow-sm border border-gray-200">
               <div className="flex items-start justify-between">
                 <div className="flex-1">
                   {/* Review Header */}
@@ -217,7 +236,7 @@ const Reviews = () => {
                       )}
                     </div>
                     <button
-                      onClick={() => handleDeleteReview(review.id)}
+                      onClick={() => handleDeleteReview(review._id)}
                       className="p-1 text-gray-400 hover:text-red-500 transition-colors"
                       title="Delete review"
                     >

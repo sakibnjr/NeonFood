@@ -1,10 +1,12 @@
 import { useState } from 'react'
-import { useDispatch } from 'react-redux'
+import { useDispatch, useSelector } from 'react-redux'
 import { X, Star, MessageCircle, CheckCircle } from 'lucide-react'
-import { addReview } from '../store/slices/reviewsSlice'
+import { addReview, selectReviewsLoading, selectReviewsError } from '../store/slices/reviewsSlice'
 
 const ReviewModal = ({ isOpen, onClose, orderData }) => {
   const dispatch = useDispatch()
+  const loading = useSelector(selectReviewsLoading)
+  const error = useSelector(selectReviewsError)
   const [submitted, setSubmitted] = useState(false)
   const [formData, setFormData] = useState({
     customerName: orderData?.customerName || '',
@@ -34,7 +36,7 @@ const ReviewModal = ({ isOpen, onClose, orderData }) => {
     }
   }
 
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault()
     
     if (formData.rating === 0) {
@@ -48,20 +50,24 @@ const ReviewModal = ({ isOpen, onClose, orderData }) => {
       tableNumber: orderData?.tableNumber || null
     }
 
-    dispatch(addReview(reviewData))
-    setSubmitted(true)
+    try {
+      await dispatch(addReview(reviewData)).unwrap()
+      setSubmitted(true)
 
-    // Auto close after 3 seconds
-    setTimeout(() => {
-      onClose()
-      setSubmitted(false)
-      setFormData({
-        customerName: '',
-        rating: 0,
-        comment: '',
-        aspects: { food: 0, service: 0, speed: 0, value: 0 }
-      })
-    }, 3000)
+      // Auto close after 3 seconds
+      setTimeout(() => {
+        onClose()
+        setSubmitted(false)
+        setFormData({
+          customerName: '',
+          rating: 0,
+          comment: '',
+          aspects: { food: 0, service: 0, speed: 0, value: 0 }
+        })
+      }, 3000)
+    } catch (error) {
+      alert('Failed to submit review. Please try again.')
+    }
   }
 
   const handleInputChange = (e) => {
@@ -240,11 +246,22 @@ const ReviewModal = ({ isOpen, onClose, orderData }) => {
             </button>
             <button
               type="submit"
-              className="flex-1 py-3 px-4 bg-primary-500 text-white rounded-lg hover:bg-primary-600 transition-colors font-semibold"
+              disabled={loading}
+              className={`flex-1 py-3 px-4 rounded-lg font-semibold transition-colors ${
+                loading 
+                  ? 'bg-gray-400 text-white cursor-not-allowed' 
+                  : 'bg-primary-500 text-white hover:bg-primary-600'
+              }`}
             >
-              Submit Review
+              {loading ? 'Submitting...' : 'Submit Review'}
             </button>
           </div>
+
+          {error && (
+            <div className="mt-4 p-3 bg-red-50 border border-red-200 rounded-lg">
+              <p className="text-sm text-red-600">Error: {error}</p>
+            </div>
+          )}
         </form>
       </div>
     </div>
