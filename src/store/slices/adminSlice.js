@@ -86,6 +86,21 @@ const adminSlice = createSlice({
     }
   },
   extraReducers: (builder) => {
+    // Helper function to calculate average order time
+    const calculateAverageOrderTime = (orders) => {
+      const completedOrders = orders.filter(order => order.status === 'completed' && order.completedTime && order.orderTime)
+      if (completedOrders.length > 0) {
+        const totalPrepTime = completedOrders.reduce((sum, order) => {
+          const orderTime = new Date(order.orderTime)
+          const completedTime = new Date(order.completedTime)
+          const prepTime = (completedTime - orderTime) / (1000 * 60) // Convert to minutes
+          return sum + prepTime
+        }, 0)
+        return Math.round(totalPrepTime / completedOrders.length)
+      }
+      return 0
+    }
+
     builder
       .addCase(fetchOrders.pending, (state) => {
         state.loading = true
@@ -98,6 +113,7 @@ const adminSlice = createSlice({
         state.stats.totalOrders = action.payload.length
         state.stats.activeOrders = action.payload.filter(order => order.status === 'pending' || order.status === 'preparing').length
         state.stats.totalRevenue = action.payload.reduce((sum, order) => sum + order.total, 0)
+        state.stats.averageOrderTime = calculateAverageOrderTime(action.payload)
       })
       .addCase(fetchOrders.rejected, (state, action) => {
         state.loading = false
@@ -108,13 +124,18 @@ const adminSlice = createSlice({
         state.stats.totalOrders += 1
         state.stats.activeOrders += 1
         state.stats.totalRevenue += action.payload.total
+        state.stats.averageOrderTime = calculateAverageOrderTime(state.orders)
       })
       .addCase(updateOrder.fulfilled, (state, action) => {
         state.orders = state.orders.map(order => order._id === action.payload._id ? action.payload : order)
+        // Recalculate stats since order status might have changed
+        state.stats.activeOrders = state.orders.filter(order => order.status === 'pending' || order.status === 'preparing').length
+        state.stats.averageOrderTime = calculateAverageOrderTime(state.orders)
       })
       .addCase(deleteOrder.fulfilled, (state, action) => {
         state.orders = state.orders.filter(order => order._id !== action.payload)
         state.stats.totalOrders -= 1
+        state.stats.averageOrderTime = calculateAverageOrderTime(state.orders)
       })
   }
 })

@@ -56,8 +56,8 @@ const Payment = () => {
         price: item.price
       })),
       total: orderSummary.total,
-      isPriority: orderSummary.hasPriority,
-      estimatedTime: orderSummary.maxDeliveryTime,
+      isPriority: orderSummary.isPriority,
+      estimatedTime: orderSummary.deliveryTime,
       paymentMethod: paymentMethod
     }
     
@@ -113,7 +113,7 @@ const Payment = () => {
           </p>
           <div className="bg-green-50 rounded-lg p-4">
             <p className="text-sm text-green-800">
-              <strong>Estimated preparation time:</strong> {orderSummary.maxDeliveryTime} minutes
+              <strong>Estimated preparation time:</strong> {orderSummary.deliveryTime} minutes
             </p>
             <p className="text-sm text-green-800 mt-1">
               <strong>Table {formData.tableNumber}</strong> - We'll notify you when it's ready!
@@ -162,7 +162,7 @@ const Payment = () => {
                     <span>{formatCurrency(item.price * item.quantity)}</span>
                   </div>
                 ))}
-                {orderSummary.hasPriority && (
+                {orderSummary.isPriority && (
                   <div className="flex justify-between text-orange-600">
                     <span>Priority Preparation</span>
                     <span>{formatCurrency(4.99)}</span>

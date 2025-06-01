@@ -30,7 +30,14 @@ const Orders = () => {
   )
 
   const handleStatusUpdate = (orderId, newStatus) => {
-    dispatch(updateOrder({ id: orderId, data: { status: newStatus } }))
+    const updateData = { status: newStatus }
+    
+    // If marking as completed, set the completion time
+    if (newStatus === 'completed') {
+      updateData.completedTime = new Date().toISOString()
+    }
+    
+    dispatch(updateOrder({ id: orderId, data: updateData }))
   }
 
   const getStatusColor = (status) => {
