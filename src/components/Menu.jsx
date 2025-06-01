@@ -130,19 +130,18 @@ const Menu = () => {
                       </div>
 
                       {/* Image Section */}
-                      <div className="relative h-48 bg-gradient-to-br from-amber-50 to-orange-50 flex items-center justify-center overflow-hidden">
-                        <div className="text-7xl transform group-hover:scale-110 transition-transform duration-500">
+                      <div className="relative h-48 w-full bg-gradient-to-br from-amber-50 to-orange-50 flex items-center justify-center overflow-hidden">
+                        <div className="relative text-7xl w-full h-full transform group-hover:scale-110 transition-transform duration-500">
                           {isImageUrl(item.image) ? (
                             <img 
                               src={item.image} 
                               alt={item.name} 
-                              className="w-full h-full object-cover" 
+                              className="absolute inset-0 w-full h-full object-cover" 
                             />
                           ) : (
                             item.image
                           )}
                         </div>
-                        <div className="absolute inset-0 bg-gradient-to-t from-black/20 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
                       </div>
 
                       {/* Content */}

@@ -11,6 +11,8 @@ import {
   fetchReviewStats,
   deleteReview 
 } from '../../store/slices/reviewsSlice'
+import { confirmAlert } from 'react-confirm-alert'
+import 'react-confirm-alert/src/react-confirm-alert.css'
 
 const Reviews = () => {
   const dispatch = useDispatch()
@@ -55,9 +57,20 @@ const Reviews = () => {
   }
 
   const handleDeleteReview = (reviewId) => {
-    if (window.confirm('Are you sure you want to delete this review?')) {
-      dispatch(deleteReview(reviewId))
-    }
+    confirmAlert({
+      title: 'Confirm Deletion',
+      message: 'Are you sure you want to delete this review?',
+      buttons: [
+        {
+          label: 'Yes',
+          onClick: () => dispatch(deleteReview(reviewId))
+        },
+        {
+          label: 'No',
+          onClick: () => {}
+        }
+      ]
+    })
   }
 
   const StarRating = ({ rating, size = 16 }) => (

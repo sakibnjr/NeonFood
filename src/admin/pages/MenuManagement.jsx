@@ -7,6 +7,10 @@ import {
   Search,
   Filter
 } from 'lucide-react'
+import { confirmAlert } from 'react-confirm-alert'
+import 'react-confirm-alert/src/react-confirm-alert.css'
+
+const apiKey = import.meta.env.VITE_GEMINI_API_KEY;
 
 const MenuManagement = () => {
   // Food Management State
@@ -23,6 +27,8 @@ const MenuManagement = () => {
   const [addFoodLoading, setAddFoodLoading] = useState(false)
   const [addFoodSuccess, setAddFoodSuccess] = useState(false)
   const [addFoodError, setAddFoodError] = useState('')
+  const [addFoodImageFile, setAddFoodImageFile] = useState(null)
+  const [generatingDesc, setGeneratingDesc] = useState(false)
 
   const [foods, setFoods] = useState([])
   const [foodsLoading, setFoodsLoading] = useState(true)
@@ -48,26 +54,49 @@ const MenuManagement = () => {
     setAddFoodLoading(true)
     setAddFoodError('')
     setAddFoodSuccess(false)
+
     try {
-      const res = await fetch('http://localhost:5000/api/foods', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          name: addFoodForm.name,
-          price: parseFloat(addFoodForm.price),
-          description: addFoodForm.description,
-          image: addFoodForm.image,
-          category: addFoodForm.category,
-          deliveryTime: addFoodForm.deliveryTime ? parseInt(addFoodForm.deliveryTime) : undefined,
-          rating: addFoodForm.rating ? parseFloat(addFoodForm.rating) : undefined,
-          popular: addFoodForm.popular
+      let res
+      if (addFoodImageFile) {
+        // Use FormData for file upload
+        const formData = new FormData()
+        formData.append('image', addFoodImageFile)
+        formData.append('name', addFoodForm.name)
+        formData.append('price', parseFloat(addFoodForm.price))
+        formData.append('description', addFoodForm.description)
+        formData.append('category', addFoodForm.category)
+        if (addFoodForm.deliveryTime) formData.append('deliveryTime', parseInt(addFoodForm.deliveryTime))
+        if (addFoodForm.rating) formData.append('rating', parseFloat(addFoodForm.rating))
+        formData.append('popular', addFoodForm.popular)
+
+        res = await fetch('http://localhost:5000/api/foods/upload', {
+          method: 'POST',
+          body: formData,
         })
-      })
+      } else {
+        // Fallback to old method if no file selected
+        res = await fetch('http://localhost:5000/api/foods', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            name: addFoodForm.name,
+            price: parseFloat(addFoodForm.price),
+            description: addFoodForm.description,
+            image: addFoodForm.image,
+            category: addFoodForm.category,
+            deliveryTime: addFoodForm.deliveryTime ? parseInt(addFoodForm.deliveryTime) : undefined,
+            rating: addFoodForm.rating ? parseFloat(addFoodForm.rating) : undefined,
+            popular: addFoodForm.popular
+          })
+        })
+      }
+
       if (!res.ok) throw new Error('Failed to add food')
       setAddFoodSuccess(true)
       setAddFoodForm({
         name: '', price: '', description: '', image: '', category: 'pizza', deliveryTime: '', rating: '', popular: false
       })
+      setAddFoodImageFile(null)
       fetchFoods()
       // Auto hide form after success
       setTimeout(() => {
@@ -97,14 +126,28 @@ const MenuManagement = () => {
   }, [])
 
   const handleDeleteFood = async (id) => {
-    if (!window.confirm('Are you sure you want to delete this food item?')) return
-    try {
-      const res = await fetch(`http://localhost:5000/api/foods/${id}`, { method: 'DELETE' })
-      if (!res.ok) throw new Error('Delete failed')
-      setFoods(foods.filter(f => f._id !== id))
-    } catch (err) {
-      setFoodError('Could not delete food.')
-    }
+    confirmAlert({
+      title: 'Confirm Deletion',
+      message: 'Are you sure you want to delete this food item?',
+      buttons: [
+        {
+          label: 'Yes',
+          onClick: async () => {
+            try {
+              const res = await fetch(`http://localhost:5000/api/foods/${id}`, { method: 'DELETE' })
+              if (!res.ok) throw new Error('Delete failed')
+              setFoods(foods.filter(f => f._id !== id))
+            } catch (err) {
+              setFoodError('Could not delete food.')
+            }
+          }
+        },
+        {
+          label: 'No',
+          onClick: () => {}
+        }
+      ]
+    })
   }
 
   const handleEditFood = (food) => {
@@ -166,6 +209,23 @@ const MenuManagement = () => {
 
   const categories = ['all', 'pizza', 'burgers', 'sides', 'drinks']
 
+  async function generateDescription(foodName) {
+
+    const endpoint = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=${apiKey}`
+    const prompt = `Write a single, delicious and enticing menu description for a food item called "${foodName} in 10-15 words".`
+
+    const response = await fetch(endpoint, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        contents: [{ parts: [{ text: prompt }] }]
+      })
+    })
+
+    const data = await response.json()
+    return data?.candidates?.[0]?.content?.parts?.[0]?.text || ''
+  }
+
   return (
     <div className="space-y-6">
       {/* Header */}
@@ -217,24 +277,47 @@ const MenuManagement = () => {
               </div>
               <div className="md:col-span-2">
                 <label className="block text-sm font-medium text-gray-700 mb-2">Description</label>
-                <textarea 
-                  name="description" 
-                  value={addFoodForm.description} 
-                  onChange={handleAddFoodChange} 
-                  required 
-                  rows={3} 
-                  className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500" 
-                />
+                <div className="flex items-center gap-2">
+                  <textarea 
+                    name="description" 
+                    value={addFoodForm.description} 
+                    onChange={handleAddFoodChange} 
+                    required 
+                    rows={3} 
+                    className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500" 
+                  />
+                  <button
+                    type="button"
+                    onClick={async () => {
+                      setGeneratingDesc(true)
+                      const desc = await generateDescription(addFoodForm.name)
+                      setAddFoodForm((prev) => ({ ...prev, description: desc }))
+                      setGeneratingDesc(false)
+                    }}
+                    className="bg-green-500 text-white px-3 py-1 rounded hover:bg-green-600 disabled:bg-gray-300"
+                    disabled={!addFoodForm.name || generatingDesc}
+                    title="Generate description with Gemini"
+                  >
+                    {generatingDesc ? 'Generating...' : 'Generate'}
+                  </button>
+                </div>
               </div>
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">Image (emoji or URL)</label>
-                <input 
-                  type="text" 
-                  name="image" 
-                  value={addFoodForm.image} 
-                  onChange={handleAddFoodChange} 
-                  required 
-                  className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500" 
+                <label className="block text-sm font-medium text-gray-700 mb-2">Image (emoji, URL, or file)</label>
+                <input
+                  type="file"
+                  name="image"
+                  accept="image/*"
+                  onChange={e => setAddFoodImageFile(e.target.files[0])}
+                  className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                />
+                <input
+                  type="text"
+                  name="image"
+                  value={addFoodForm.image}
+                  onChange={handleAddFoodChange}
+                  placeholder="Or paste emoji/URL"
+                  className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 mt-2"
                 />
               </div>
               <div>

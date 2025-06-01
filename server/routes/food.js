@@ -1,6 +1,8 @@
 const express = require('express');
 const router = express.Router();
 const Food = require('../models/Food');
+const upload = require('../utils/multer');
+const cloudinary = require('../utils/cloudinary');
 
 // Get all foods
 router.get('/', async (req, res) => {
@@ -36,5 +38,29 @@ router.delete('/:id', async (req, res) => {
     res.status(400).json({ error: 'Delete failed' })
   }
 })
+
+// Upload food image and create food
+router.post('/upload', upload.single('image'), async (req, res) => {
+  try {
+    if (!req.file) return res.status(400).json({ error: 'No file uploaded' });
+    // Upload to Cloudinary
+    const stream = cloudinary.uploader.upload_stream(
+      { folder: 'neonfood' },
+      async (error, result) => {
+        if (error) return res.status(500).json({ error: error.message });
+        // Save the URL in MongoDB
+        const food = new Food({
+          ...req.body,
+          image: result.secure_url,
+        });
+        await food.save();
+        res.status(201).json(food);
+      }
+    );
+    stream.end(req.file.buffer);
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
 
 module.exports = router; 
