@@ -21,49 +21,53 @@ import { selectReviewStats, selectRecentReviews, fetchReviews, fetchReviewStats 
 import { useState, useEffect, useMemo } from 'react'
 
 const Dashboard = () => {
-  const stats = useSelector(selectStats)
-  const orders = useSelector(selectOrders)
-  const activeOrders = useSelector(selectActiveOrders)
-  const recentOrders = useSelector(selectRecentOrders)
-  const reviewStats = useSelector(selectReviewStats)
-  const recentReviews = useSelector(selectRecentReviews(3))
+  const stats = useSelector(selectStats) || {}
+  const orders = useSelector(selectOrders) || []
+  const activeOrders = useSelector(selectActiveOrders) || []
+  const recentOrders = useSelector(selectRecentOrders) || []
+  const reviewStats = useSelector(selectReviewStats) || {}
+  const recentReviews = useSelector(selectRecentReviews(3)) || []
   const dispatch = useDispatch()
+
+  // Loading state
+  const [loading, setLoading] = useState(true)
 
   // Calculate today's orders and revenue
   const today = new Date().toDateString()
   const todayOrders = orders.filter(order => 
-    new Date(order.orderTime).toDateString() === today
+    order.orderTime && new Date(order.orderTime).toDateString() === today
   )
-  const todayRevenue = todayOrders.reduce((sum, order) => sum + order.total, 0)
+  const todayRevenue = todayOrders.reduce((sum, order) => sum + (order.total || 0), 0)
 
   // Calculate order counts using useMemo to ensure they update when orders change
   const readyOrdersCount = useMemo(() => 
-    orders.filter(order => order.status === 'ready').length, 
+    (orders || []).filter(order => order.status === 'ready').length, 
     [orders]
   )
   
   const preparingOrdersCount = useMemo(() => 
-    orders.filter(order => order.status === 'preparing').length, 
+    (orders || []).filter(order => order.status === 'preparing').length, 
     [orders]
   )
 
   const pendingOrdersCount = useMemo(() => 
-    orders.filter(order => order.status === 'pending').length, 
+    (orders || []).filter(order => order.status === 'pending').length, 
     [orders]
   )
 
   // Calculate payment method stats
   const paidOnlineCount = useMemo(() => 
-    orders.filter(order => order.paymentMethod === 'online').length,
+    (orders || []).filter(order => order.paymentMethod === 'online').length,
     [orders]
   )
 
   const payAtCounterCount = useMemo(() => 
-    orders.filter(order => order.paymentMethod === 'counter' && order.status !== 'completed').length,
+    (orders || []).filter(order => order.paymentMethod === 'counter' && order.status !== 'completed').length,
     [orders]
   )
 
   const formatTime = (timeString) => {
+    if (!timeString) return ''
     return new Date(timeString).toLocaleTimeString('en-US', {
       hour: '2-digit',
       minute: '2-digit'
@@ -71,6 +75,7 @@ const Dashboard = () => {
   }
 
   const formatDate = (dateString) => {
+    if (!dateString) return ''
     return new Date(dateString).toLocaleDateString('en-US', {
       month: 'short',
       day: 'numeric',
@@ -96,10 +101,28 @@ const Dashboard = () => {
   )
 
   useEffect(() => {
-    dispatch(fetchOrders())
-    dispatch(fetchReviews())
-    dispatch(fetchReviewStats())
+    const fetchAll = async () => {
+      setLoading(true)
+      await Promise.all([
+        dispatch(fetchOrders()),
+        dispatch(fetchReviews()),
+        dispatch(fetchReviewStats())
+      ])
+      setLoading(false)
+    }
+    fetchAll()
   }, [dispatch])
+
+  if (loading) {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-gray-50 to-gray-100">
+        <div className="text-center">
+          <div className="inline-block animate-spin rounded-full h-16 w-16 border-b-2 border-primary-500 mb-4"></div>
+          <p className="text-xl text-gray-500 font-medium">Loading dashboard...</p>
+        </div>
+      </div>
+    )
+  }
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-gray-50 to-gray-100">
@@ -130,7 +153,7 @@ const Dashboard = () => {
               <div>
                 <p className="text-green-100 text-sm font-medium">Today's Revenue</p>
                 <p className="text-3xl font-bold">${todayRevenue.toFixed(2)}</p>
-                <p className="text-green-100 text-sm mt-1">From {todayOrders.length} orders</p>
+                <p className="text-green-100 text-sm mt-1">From {(todayOrders || []).length} orders</p>
               </div>
               <div className="bg-white bg-opacity-20 p-3 rounded-lg">
                 <DollarSign size={32} />
@@ -157,7 +180,7 @@ const Dashboard = () => {
             <div className="flex items-center justify-between">
               <div>
                 <p className="text-orange-100 text-sm font-medium">Avg Prep Time</p>
-                <p className="text-3xl font-bold">{stats.averageOrderTime}m</p>
+                <p className="text-3xl font-bold">{(stats.averageOrderTime || 0)}m</p>
                 <p className="text-orange-100 text-sm mt-1">Kitchen efficiency</p>
               </div>
               <div className="bg-white bg-opacity-20 p-3 rounded-lg">
@@ -172,10 +195,10 @@ const Dashboard = () => {
               <div>
                 <p className="text-purple-100 text-sm font-medium">Customer Rating</p>
                 <div className="flex items-center space-x-2">
-                  <p className="text-3xl font-bold">{reviewStats.averageRating.toFixed(1)}</p>
-                  <StarRating rating={Math.round(reviewStats.averageRating)} size={20} />
+                  <p className="text-3xl font-bold">{(reviewStats.averageRating || 0).toFixed(1)}</p>
+                  <StarRating rating={Math.round(reviewStats.averageRating || 0)} size={20} />
                 </div>
-                <p className="text-purple-100 text-sm mt-1">{reviewStats.totalReviews} reviews</p>
+                <p className="text-purple-100 text-sm mt-1">{reviewStats.totalReviews || 0} reviews</p>
               </div>
               <div className="bg-white bg-opacity-20 p-3 rounded-lg">
                 <Star size={32} />
@@ -277,15 +300,15 @@ const Dashboard = () => {
             <div className="space-y-3">
               <div className="flex justify-between">
                 <span className="text-gray-600">Total Orders Today</span>
-                <span className="font-semibold">{todayOrders.length}</span>
+                <span className="font-semibold">{(todayOrders || []).length}</span>
               </div>
               <div className="flex justify-between">
                 <span className="text-gray-600">Total Revenue</span>
-                <span className="font-semibold">${stats.totalRevenue.toFixed(2)}</span>
+                <span className="font-semibold">${(stats.totalRevenue || 0).toFixed(2)}</span>
               </div>
               <div className="flex justify-between">
                 <span className="text-gray-600">All-time Orders</span>
-                <span className="font-semibold">{stats.totalOrders}</span>
+                <span className="font-semibold">{stats.totalOrders || 0}</span>
               </div>
             </div>
           </div>
@@ -303,11 +326,11 @@ const Dashboard = () => {
             </div>
             <div className="p-6">
               <div className="space-y-4">
-                {recentOrders.slice(0, 5).map((order) => (
+                {(recentOrders || []).slice(0, 5).map((order) => (
                   <div key={order._id} className="flex items-center justify-between p-4 bg-gray-50 rounded-lg hover:bg-gray-100 transition-colors">
                     <div>
                       <p className="font-medium text-gray-900">{order.customerName}</p>
-                      <p className="text-sm text-gray-600">Table {order.tableNumber} • ${order.total.toFixed(2)}</p>
+                      <p className="text-sm text-gray-600">Table {order.tableNumber} • ${order.total?.toFixed(2) || ''}</p>
                       <div className="flex items-center space-x-2 mt-1">
                         {order.paymentMethod === 'online' ? (
                           <div className="flex items-center space-x-1 text-xs text-green-600">
@@ -352,21 +375,21 @@ const Dashboard = () => {
             </div>
             <div className="p-6">
               <div className="space-y-4">
-                {recentReviews.length === 0 ? (
+                {(!recentReviews || recentReviews.length === 0) ? (
                   <div className="text-center py-8">
                     <MessageCircle className="h-12 w-12 text-gray-300 mx-auto mb-4" />
                     <p className="text-gray-500">No reviews yet</p>
                     <p className="text-sm text-gray-400">Reviews will appear here when customers leave feedback</p>
                   </div>
                 ) : (
-                  recentReviews.map((review) => (
+                  (recentReviews || []).map((review) => (
                     <div key={review._id} className="p-4 bg-gray-50 rounded-lg hover:bg-gray-100 transition-colors">
                       <div className="flex items-start justify-between mb-2">
                         <div>
                           <p className="font-medium text-gray-900">
                             {review.customerName || 'Anonymous'}
                           </p>
-                          <StarRating rating={review.rating} size={14} />
+                          <StarRating rating={review.rating || 0} size={14} />
                         </div>
                         <span className="text-xs text-gray-500">{formatDate(review.date)}</span>
                       </div>

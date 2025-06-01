@@ -42,7 +42,7 @@ const Menu = () => {
   }, [])
 
   const handleAddToCart = (item) => {
-    addToCart(item)
+    addToCart({ ...item, id: item._id || item.id })
   }
 
   const getItemBadges = (item) => {

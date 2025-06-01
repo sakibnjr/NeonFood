@@ -52,7 +52,7 @@ const Payment = () => {
       customerName: formData.customerName,
       tableNumber: parseInt(formData.tableNumber),
       items: orderSummary.items.map(item => ({
-        id: item.id,
+        _id: item._id || item.id, 
         name: item.name,
         quantity: item.quantity,
         price: item.price
