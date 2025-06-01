@@ -1,9 +1,10 @@
 import { createSlice, createAsyncThunk } from '@reduxjs/toolkit'
+import { API_BASE_URL } from '../api'
 
 // Async thunks for real API calls
 export const fetchOrders = createAsyncThunk('admin/fetchOrders', async (_, { rejectWithValue }) => {
   try {
-    const res = await fetch('http://localhost:5000/api/orders')
+    const res = await fetch(`${API_BASE_URL}/orders`)
     if (!res.ok) throw new Error('Failed to fetch orders')
     return await res.json()
   } catch (err) {
@@ -13,7 +14,7 @@ export const fetchOrders = createAsyncThunk('admin/fetchOrders', async (_, { rej
 
 export const addOrder = createAsyncThunk('admin/addOrder', async (order, { rejectWithValue }) => {
   try {
-    const res = await fetch('http://localhost:5000/api/orders', {
+    const res = await fetch(`${API_BASE_URL}/orders`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify(order)
@@ -27,7 +28,7 @@ export const addOrder = createAsyncThunk('admin/addOrder', async (order, { rejec
 
 export const updateOrder = createAsyncThunk('admin/updateOrder', async ({ id, data }, { rejectWithValue }) => {
   try {
-    const res = await fetch(`http://localhost:5000/api/orders/${id}`, {
+    const res = await fetch(`${API_BASE_URL}/orders/${id}`, {
       method: 'PUT',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify(data)
@@ -41,7 +42,7 @@ export const updateOrder = createAsyncThunk('admin/updateOrder', async ({ id, da
 
 export const deleteOrder = createAsyncThunk('admin/deleteOrder', async (id, { rejectWithValue }) => {
   try {
-    const res = await fetch(`http://localhost:5000/api/orders/${id}`, { method: 'DELETE' })
+    const res = await fetch(`${API_BASE_URL}/orders/${id}`, { method: 'DELETE' })
     if (!res.ok) throw new Error('Failed to delete order')
     return id
   } catch (err) {

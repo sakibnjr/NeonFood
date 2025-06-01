@@ -1,11 +1,12 @@
 import { createSlice, createAsyncThunk } from '@reduxjs/toolkit'
+import { API_BASE_URL } from '../api'
 
 // Async thunks for settings operations
 export const loadSettings = createAsyncThunk(
   'settings/loadSettings',
   async (_, { rejectWithValue }) => {
     try {
-      const response = await fetch('http://localhost:5000/api/settings')
+      const response = await fetch(`${API_BASE_URL}/settings`)
       if (!response.ok) {
         // If no settings found, return default settings
         if (response.status === 404) {
@@ -29,7 +30,7 @@ export const saveSettings = createAsyncThunk(
   'settings/saveSettings',
   async (settings, { rejectWithValue }) => {
     try {
-      const response = await fetch('http://localhost:5000/api/settings', {
+      const response = await fetch(`${API_BASE_URL}/settings`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(settings)
@@ -59,7 +60,7 @@ export const changePassword = createAsyncThunk(
     try {
       const token = localStorage.getItem('adminToken')
       
-      const response = await fetch('http://localhost:5000/api/admin/change-password', {
+      const response = await fetch(`${API_BASE_URL}/admin/change-password`, {
         method: 'POST',
         headers: { 
           'Content-Type': 'application/json',

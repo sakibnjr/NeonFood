@@ -4,6 +4,7 @@ import { useNavigate } from 'react-router-dom'
 import { User, Lock } from 'lucide-react'
 import toast, { Toaster } from 'react-hot-toast'
 import { setAuthenticated, selectLoading, selectError, selectIsAuthenticated, setLoading, setError } from '../../store/slices/adminSlice'
+import { API_BASE_URL } from '../../store/api'
 
 const AdminLogin = () => {
   const dispatch = useDispatch()
@@ -35,7 +36,7 @@ const AdminLogin = () => {
     const loadingToast = toast.loading('Signing in...')
 
     try {
-      const response = await fetch('http://localhost:5000/api/admin/login', {
+      const response = await fetch(`${API_BASE_URL}/admin/login`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',

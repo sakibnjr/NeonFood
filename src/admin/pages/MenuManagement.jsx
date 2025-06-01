@@ -9,6 +9,7 @@ import {
 } from 'lucide-react'
 import { confirmAlert } from 'react-confirm-alert'
 import 'react-confirm-alert/src/react-confirm-alert.css'
+import { API_BASE_URL } from '../../store/api'
 
 const apiKey = import.meta.env.VITE_GEMINI_API_KEY;
 
@@ -69,13 +70,13 @@ const MenuManagement = () => {
         if (addFoodForm.rating) formData.append('rating', parseFloat(addFoodForm.rating))
         formData.append('popular', addFoodForm.popular)
 
-        res = await fetch('http://localhost:5000/api/foods/upload', {
+        res = await fetch(`${API_BASE_URL}/foods/upload`, {
           method: 'POST',
           body: formData,
         })
       } else {
         // Fallback to old method if no file selected
-        res = await fetch('http://localhost:5000/api/foods', {
+        res = await fetch(`${API_BASE_URL}/foods`, {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({
@@ -112,7 +113,7 @@ const MenuManagement = () => {
   const fetchFoods = async () => {
     setFoodsLoading(true)
     try {
-      const res = await fetch('http://localhost:5000/api/foods')
+      const res = await fetch(`${API_BASE_URL}/foods`)
       const data = await res.json()
       setFoods(data)
     } catch (err) {
@@ -134,7 +135,7 @@ const MenuManagement = () => {
           label: 'Yes',
           onClick: async () => {
             try {
-              const res = await fetch(`http://localhost:5000/api/foods/${id}`, { method: 'DELETE' })
+              const res = await fetch(`${API_BASE_URL}/foods/${id}`, { method: 'DELETE' })
               if (!res.ok) throw new Error('Delete failed')
               setFoods(foods.filter(f => f._id !== id))
             } catch (err) {
@@ -177,7 +178,7 @@ const MenuManagement = () => {
         popular: editFoodForm.popular
       }
       
-      const res = await fetch(`http://localhost:5000/api/foods/${editFoodId}`, {
+      const res = await fetch(`${API_BASE_URL}/foods/${editFoodId}`, {
         method: 'PUT',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(updateData)

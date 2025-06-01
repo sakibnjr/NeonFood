@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react'
 import { Plus, Star, Clock, Flame, Leaf } from 'lucide-react'
 import { useAppActions } from '../store/hooks'
+import { API_BASE_URL } from '../store/api'
 
 const groupByCategory = (foods) => {
   return foods.reduce((acc, food) => {
@@ -30,7 +31,7 @@ const Menu = () => {
     const fetchMenu = async () => {
       setLoading(true)
       try {
-        const res = await fetch('http://localhost:5000/api/foods')
+        const res = await fetch(`${API_BASE_URL}/foods`)
         const data = await res.json()
         setMenuData(groupByCategory(data))
       } catch (err) {

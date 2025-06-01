@@ -1,6 +1,7 @@
 import { createSlice, createAsyncThunk } from '@reduxjs/toolkit'
+import { API_BASE_URL } from '../api'
 
-const API_URL = 'http://localhost:5000/api/reviews'
+const API_URL = `${API_BASE_URL}/reviews`
 
 // Async thunks for review operations
 export const fetchReviews = createAsyncThunk(
