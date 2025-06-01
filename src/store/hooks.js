@@ -23,7 +23,7 @@ export const useCartActions = () => {
   return {
     addToCart: (item) => dispatch(addToCart(item)),
     removeFromCart: (itemId) => dispatch(removeFromCart(itemId)),
-    updateQuantity: (itemId, newQuantity) => dispatch(updateQuantity({ itemId, newQuantity })),
+    updateQuantity: (payload) => dispatch(updateQuantity(payload)),
     togglePriority: (isPriority) => dispatch(togglePriority(isPriority)),
     clearCart: () => dispatch(clearCart()),
   }

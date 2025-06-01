@@ -31,6 +31,9 @@ const Cart = () => {
   
   if (!isOpen) return null
 
+  // Helper function to detect if image is a URL
+  const isImageUrl = (str) => typeof str === 'string' && (str.startsWith('http') || str.startsWith('/'))
+
   const getPriorityFee = () => {
     return isPriority ? 4.99 : 0
   }
@@ -52,7 +55,7 @@ const Cart = () => {
     if (newQuantity <= 0) {
       removeFromCart(itemId)
     } else {
-      updateQuantity({ id: itemId, quantity: newQuantity })
+      updateQuantity({ itemId, newQuantity })
     }
   }
 
@@ -105,7 +108,17 @@ const Cart = () => {
               <div className="space-y-4">
                 {items.map((item) => (
                   <div key={item.id} className="flex items-center space-x-4 bg-gray-50 rounded-lg p-4">
-                    <div className="text-3xl">{item.image}</div>
+                    <div className="text-3xl flex items-center justify-center w-12 h-12">
+                      {isImageUrl(item.image) ? (
+                        <img 
+                          src={item.image} 
+                          alt={item.name} 
+                          className="w-10 h-10 object-contain rounded"
+                        />
+                      ) : (
+                        item.image
+                      )}
+                    </div>
                     
                     <div className="flex-1">
                       <h4 className="font-medium text-gray-900">{item.name}</h4>
