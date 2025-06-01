@@ -1,4 +1,4 @@
-import { useSelector } from 'react-redux'
+import { useSelector, useDispatch } from 'react-redux'
 import { 
   DollarSign, 
   ShoppingBag, 
@@ -11,9 +11,9 @@ import {
   MessageCircle,
   Eye
 } from 'lucide-react'
-import { selectStats, selectOrders, selectActiveOrders, selectRecentOrders } from '../../store/slices/adminSlice'
+import { selectStats, selectOrders, selectActiveOrders, selectRecentOrders, fetchOrders } from '../../store/slices/adminSlice'
 import { selectReviewStats, selectRecentReviews } from '../../store/slices/reviewsSlice'
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useMemo } from 'react'
 
 const Dashboard = () => {
   const stats = useSelector(selectStats)
@@ -22,6 +22,7 @@ const Dashboard = () => {
   const recentOrders = useSelector(selectRecentOrders)
   const reviewStats = useSelector(selectReviewStats)
   const recentReviews = useSelector(selectRecentReviews(3))
+  const dispatch = useDispatch()
 
   // Calculate today's orders and revenue
   const today = new Date().toDateString()
@@ -29,6 +30,17 @@ const Dashboard = () => {
     new Date(order.orderTime).toDateString() === today
   )
   const todayRevenue = todayOrders.reduce((sum, order) => sum + order.total, 0)
+
+  // Calculate order counts using useMemo to ensure they update when orders change
+  const readyOrdersCount = useMemo(() => 
+    orders.filter(order => order.status === 'ready').length, 
+    [orders]
+  )
+  
+  const preparingOrdersCount = useMemo(() => 
+    orders.filter(order => order.status === 'preparing').length, 
+    [orders]
+  )
 
   const statCards = [
     {
@@ -184,7 +196,8 @@ const Dashboard = () => {
 
   useEffect(() => {
     fetchFoods()
-  }, [])
+    dispatch(fetchOrders())
+  }, [dispatch])
 
   // Delete food
   const handleDeleteFood = async (id) => {
@@ -415,7 +428,7 @@ const Dashboard = () => {
             <h3 className="text-lg font-semibold text-gray-900">Orders Ready</h3>
           </div>
           <p className="text-3xl font-bold text-gray-900">
-            {orders.filter(order => order.status === 'ready').length}
+            {readyOrdersCount}
           </p>
           <p className="text-sm text-gray-600 mt-2">Orders ready for pickup</p>
         </div>
@@ -426,7 +439,7 @@ const Dashboard = () => {
             <h3 className="text-lg font-semibold text-gray-900">Preparing</h3>
           </div>
           <p className="text-3xl font-bold text-gray-900">
-            {orders.filter(order => order.status === 'preparing').length}
+            {preparingOrdersCount}
           </p>
           <p className="text-sm text-gray-600 mt-2">Orders in kitchen</p>
         </div>

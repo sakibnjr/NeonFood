@@ -1,5 +1,5 @@
 import { useDispatch, useSelector } from 'react-redux'
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { 
   Clock, 
   User, 
@@ -12,8 +12,8 @@ import {
 } from 'lucide-react'
 import { 
   selectOrders, 
-  updateOrderStatus, 
-  updateStats 
+  updateOrder,
+  fetchOrders
 } from '../../store/slices/adminSlice'
 
 const Orders = () => {
@@ -21,13 +21,16 @@ const Orders = () => {
   const orders = useSelector(selectOrders)
   const [statusFilter, setStatusFilter] = useState('all')
 
+  useEffect(() => {
+    dispatch(fetchOrders())
+  }, [dispatch])
+
   const filteredOrders = orders.filter(order => 
     statusFilter === 'all' || order.status === statusFilter
   )
 
   const handleStatusUpdate = (orderId, newStatus) => {
-    dispatch(updateOrderStatus({ orderId, status: newStatus }))
-    dispatch(updateStats())
+    dispatch(updateOrder({ id: orderId, data: { status: newStatus } }))
   }
 
   const getStatusColor = (status) => {
@@ -155,11 +158,11 @@ const Orders = () => {
       {/* Orders Grid */}
       <div className="grid grid-cols-1 lg:grid-cols-2 xl:grid-cols-3 gap-6">
         {filteredOrders.map((order) => (
-          <div key={order.id} className="bg-white rounded-lg shadow border border-gray-200 overflow-hidden">
+          <div key={order._id} className="bg-white rounded-lg shadow border border-gray-200 overflow-hidden">
             {/* Order Header */}
             <div className="p-4 border-b border-gray-200">
               <div className="flex items-center justify-between mb-2">
-                <h3 className="text-lg font-semibold text-gray-900">{order.id}</h3>
+                <h3 className="text-lg font-semibold text-gray-900">{order._id}</h3>
                 <div className={`flex items-center space-x-1 px-2 py-1 rounded-full text-xs font-medium border ${getStatusColor(order.status)}`}>
                   {getStatusIcon(order.status)}
                   <span className="capitalize">{order.status}</span>
@@ -222,7 +225,7 @@ const Orders = () => {
               {/* Action Button */}
               {order.status !== 'completed' && (
                 <button
-                  onClick={() => handleStatusUpdate(order.id, getNextStatus(order.status))}
+                  onClick={() => handleStatusUpdate(order._id, getNextStatus(order.status))}
                   className="w-full py-2 px-4 bg-primary-500 text-white rounded-md hover:bg-primary-600 transition-colors text-sm font-medium"
                 >
                   {order.status === 'pending' && 'Start Preparing'}

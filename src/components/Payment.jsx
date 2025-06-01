@@ -3,7 +3,7 @@ import { useDispatch, useSelector } from 'react-redux'
 import { X, CreditCard, Wallet, ArrowLeft, CheckCircle } from 'lucide-react'
 import { selectOrderSummary } from '../store/slices/cartSlice'
 import { selectIsPaymentOpen } from '../store/slices/uiSlice'
-import { addNewOrder, updateStats } from '../store/slices/adminSlice'
+import { addOrder } from '../store/slices/adminSlice'
 import { useAppActions } from '../store/hooks'
 
 const Payment = () => {
@@ -62,8 +62,7 @@ const Payment = () => {
     }
     
     // Add order to admin dashboard
-    dispatch(addNewOrder(newOrder))
-    dispatch(updateStats())
+    await dispatch(addOrder(newOrder))
     
     setProcessing(false)
     setCompleted(true)

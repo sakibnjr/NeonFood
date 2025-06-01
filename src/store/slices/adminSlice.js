@@ -1,74 +1,67 @@
 import { createSlice, createAsyncThunk } from '@reduxjs/toolkit'
 
-// Mock data for orders
-const mockOrders = [
-  {
-    id: 'ORD-001',
-    customerName: 'John Doe',
-    tableNumber: 5,
-    items: [
-      { id: 1, name: 'Margherita Pizza', quantity: 2, price: 12.99 },
-      { id: 10, name: 'Coca Cola', quantity: 1, price: 2.99 }
-    ],
-    total: 28.97,
-    status: 'pending',
-    isPriority: true,
-    orderTime: new Date().toISOString(),
-    estimatedTime: 15
-  },
-  {
-    id: 'ORD-002',
-    customerName: 'Jane Smith',
-    tableNumber: 3,
-    items: [
-      { id: 4, name: 'Classic Cheeseburger', quantity: 1, price: 9.99 },
-      { id: 7, name: 'French Fries', quantity: 1, price: 4.99 }
-    ],
-    total: 14.98,
-    status: 'preparing',
-    isPriority: false,
-    orderTime: new Date(Date.now() - 300000).toISOString(), // 5 minutes ago
-    estimatedTime: 12
+// Async thunks for real API calls
+export const fetchOrders = createAsyncThunk('admin/fetchOrders', async (_, { rejectWithValue }) => {
+  try {
+    const res = await fetch('http://localhost:5000/api/orders')
+    if (!res.ok) throw new Error('Failed to fetch orders')
+    return await res.json()
+  } catch (err) {
+    return rejectWithValue(err.message)
   }
-]
+})
+
+export const addOrder = createAsyncThunk('admin/addOrder', async (order, { rejectWithValue }) => {
+  try {
+    const res = await fetch('http://localhost:5000/api/orders', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(order)
+    })
+    if (!res.ok) throw new Error('Failed to add order')
+    return await res.json()
+  } catch (err) {
+    return rejectWithValue(err.message)
+  }
+})
+
+export const updateOrder = createAsyncThunk('admin/updateOrder', async ({ id, data }, { rejectWithValue }) => {
+  try {
+    const res = await fetch(`http://localhost:5000/api/orders/${id}`, {
+      method: 'PUT',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(data)
+    })
+    if (!res.ok) throw new Error('Failed to update order')
+    return await res.json()
+  } catch (err) {
+    return rejectWithValue(err.message)
+  }
+})
+
+export const deleteOrder = createAsyncThunk('admin/deleteOrder', async (id, { rejectWithValue }) => {
+  try {
+    const res = await fetch(`http://localhost:5000/api/orders/${id}`, { method: 'DELETE' })
+    if (!res.ok) throw new Error('Failed to delete order')
+    return id
+  } catch (err) {
+    return rejectWithValue(err.message)
+  }
+})
 
 const initialState = {
   isAuthenticated: false,
   user: null,
-  orders: mockOrders,
+  orders: [],
   stats: {
-    totalOrders: 2,
-    activeOrders: 2,
-    totalRevenue: 43.95,
-    averageOrderTime: 13.5
+    totalOrders: 0,
+    activeOrders: 0,
+    totalRevenue: 0,
+    averageOrderTime: 0
   },
   loading: false,
   error: null
 }
-
-// Async thunks for API calls (simulated)
-export const loginAdmin = createAsyncThunk(
-  'admin/login',
-  async ({ username, password }, { rejectWithValue }) => {
-    try {
-      // Simulate API call
-      await new Promise(resolve => setTimeout(resolve, 1000))
-      
-      if (username === 'admin' && password === 'admin123') {
-        return {
-          id: 1,
-          username: 'admin',
-          name: 'Restaurant Manager',
-          role: 'admin'
-        }
-      } else {
-        throw new Error('Invalid credentials')
-      }
-    } catch (error) {
-      return rejectWithValue(error.message)
-    }
-  }
-)
 
 const adminSlice = createSlice({
   name: 'admin',
@@ -78,61 +71,50 @@ const adminSlice = createSlice({
       state.isAuthenticated = false
       state.user = null
     },
-    
-    updateOrderStatus: (state, action) => {
-      const { orderId, status } = action.payload
-      const order = state.orders.find(order => order.id === orderId)
-      if (order) {
-        order.status = status
-        if (status === 'completed') {
-          order.completedTime = new Date().toISOString()
+    setAuthenticated: (state, action) => {
+      state.isAuthenticated = action.payload
+      if (action.payload) {
+        state.user = {
+          id: 1,
+          username: 'admin',
+          name: 'Restaurant Manager',
+          role: 'admin'
         }
-      }
-    },
-    
-    addNewOrder: (state, action) => {
-      const newOrder = {
-        ...action.payload,
-        id: `ORD-${String(state.orders.length + 1).padStart(3, '0')}`,
-        orderTime: new Date().toISOString(),
-        status: 'pending'
-      }
-      state.orders.unshift(newOrder)
-      state.stats.totalOrders += 1
-      state.stats.activeOrders += 1
-      state.stats.totalRevenue += newOrder.total
-    },
-    
-    updateStats: (state) => {
-      const activeOrders = state.orders.filter(order => 
-        order.status === 'pending' || order.status === 'preparing'
-      ).length
-      
-      const totalRevenue = state.orders.reduce((sum, order) => sum + order.total, 0)
-      
-      state.stats = {
-        ...state.stats,
-        activeOrders,
-        totalRevenue,
-        totalOrders: state.orders.length
+      } else {
+        state.user = null
       }
     }
   },
-  
   extraReducers: (builder) => {
     builder
-      .addCase(loginAdmin.pending, (state) => {
+      .addCase(fetchOrders.pending, (state) => {
         state.loading = true
         state.error = null
       })
-      .addCase(loginAdmin.fulfilled, (state, action) => {
+      .addCase(fetchOrders.fulfilled, (state, action) => {
         state.loading = false
-        state.isAuthenticated = true
-        state.user = action.payload
+        state.orders = action.payload
+        // Update stats
+        state.stats.totalOrders = action.payload.length
+        state.stats.activeOrders = action.payload.filter(order => order.status === 'pending' || order.status === 'preparing').length
+        state.stats.totalRevenue = action.payload.reduce((sum, order) => sum + order.total, 0)
       })
-      .addCase(loginAdmin.rejected, (state, action) => {
+      .addCase(fetchOrders.rejected, (state, action) => {
         state.loading = false
         state.error = action.payload
+      })
+      .addCase(addOrder.fulfilled, (state, action) => {
+        state.orders.unshift(action.payload)
+        state.stats.totalOrders += 1
+        state.stats.activeOrders += 1
+        state.stats.totalRevenue += action.payload.total
+      })
+      .addCase(updateOrder.fulfilled, (state, action) => {
+        state.orders = state.orders.map(order => order._id === action.payload._id ? action.payload : order)
+      })
+      .addCase(deleteOrder.fulfilled, (state, action) => {
+        state.orders = state.orders.filter(order => order._id !== action.payload)
+        state.stats.totalOrders -= 1
       })
   }
 })
@@ -146,7 +128,7 @@ export const selectActiveOrders = (state) =>
     order.status === 'pending' || order.status === 'preparing' || order.status === 'ready'
   )
 export const selectRecentOrders = (state) => 
-  state.admin.orders.slice().sort((a, b) => new Date(b.timestamp) - new Date(a.timestamp))
+  state.admin.orders.slice().sort((a, b) => new Date(b.orderTime) - new Date(a.orderTime))
 export const selectStats = (state) => state.admin.stats
 export const selectLoading = (state) => state.admin.loading
 export const selectError = (state) => state.admin.error
@@ -157,6 +139,6 @@ export const selectOrdersByStatus = (status) => (state) =>
 export const selectPendingOrders = (state) => 
   state.admin.orders.filter(order => order.status === 'pending')
 
-export const { logout, updateOrderStatus, addNewOrder, updateStats } = adminSlice.actions
+export const { logout, setAuthenticated } = adminSlice.actions
 
 export default adminSlice.reducer 

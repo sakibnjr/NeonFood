@@ -13,7 +13,7 @@ const groupByCategory = (foods) => {
 const isImageUrl = (str) => typeof str === 'string' && (str.startsWith('http') || str.startsWith('/'))
 
 const Menu = () => {
-  const [activeCategory, setActiveCategory] = useState('pizza')
+  const [activeCategory, setActiveCategory] = useState('all')
   const [menuData, setMenuData] = useState({})
   const [loading, setLoading] = useState(true)
   const { addToCart } = useAppActions()

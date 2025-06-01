@@ -2,7 +2,7 @@ import { useState, useEffect } from 'react'
 import { useDispatch, useSelector } from 'react-redux'
 import { useNavigate } from 'react-router-dom'
 import { User, Lock, AlertCircle } from 'lucide-react'
-import { loginAdmin, selectLoading, selectError, selectIsAuthenticated } from '../../store/slices/adminSlice'
+import { setAuthenticated, selectLoading, selectError, selectIsAuthenticated } from '../../store/slices/adminSlice'
 
 const AdminLogin = () => {
   const dispatch = useDispatch()
@@ -23,21 +23,11 @@ const AdminLogin = () => {
     }
   }, [isAuthenticated, navigate])
 
-  const handleSubmit = async (e) => {
+  const handleSubmit = (e) => {
     e.preventDefault()
-    console.log('Attempting login with:', { username: formData.username, password: formData.password })
-    
-    try {
-      const result = await dispatch(loginAdmin(formData))
-      console.log('Login result:', result)
-      
-      if (result.type === 'admin/login/fulfilled') {
-        console.log('Login successful, redirecting...')
-        navigate('/admin')
-      }
-    } catch (err) {
-      console.error('Login error:', err)
-    }
+    // Set isAuthenticated to true in Redux (simulate login)
+    dispatch(setAuthenticated(true))
+    navigate('/admin')
   }
 
   const handleChange = (e) => {
